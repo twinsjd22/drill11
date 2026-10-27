@@ -6,11 +6,13 @@ class AutoRun:
     # 자동 무적 런 상태: 키 조작 없이 스스로 좌우로 달리기
     SPEED = 10  # 한 프레임에 이동하는 픽셀 수 (RUN의 2배)
     SCALE = 2  # 확대 배율
+    DURATION = 5  # 지속 시간(초)
 
     def __init__(self, boy):
         self.boy = boy
 
     def enter(self):
+        self.start_time = get_time()  # 5초 타이머 시작
         self.boy.dir = self.boy.face_dir  # 바라보던 방향으로 출발
 
     def exit(self):
@@ -30,6 +32,9 @@ class AutoRun:
             boy.x = margin
             boy.dir = boy.face_dir = 1
 
+        if get_time() - self.start_time > AutoRun.DURATION:
+            boy.time_out()  # 5초가 지나면 IDLE로 복귀
+
     def draw(self):
         boy = self.boy
         size = 100 * AutoRun.SCALE
@@ -47,6 +52,7 @@ class Boy:
     # 상태 전이 규칙
     transitions = [
         {'trigger': 'time_out', 'source': 'IDLE', 'dest': 'SLEEP'},  # IDLE로 5초가 지나면 SLEEP
+        {'trigger': 'time_out', 'source': 'AUTO_RUN', 'dest': 'IDLE'},  # AUTO_RUN으로 5초가 지나면 IDLE
         {'trigger': 'space_down', 'source': 'SLEEP', 'dest': 'IDLE'},  # SLEEP에서 SPACE를 누르면 IDLE
         {'trigger': 'arrow_down', 'source': ['IDLE', 'SLEEP'], 'dest': 'RUN'},  # IDLE 또는 SLEEP에서 방향키를 누르면 RUN
         {'trigger': 'arrow_up', 'source': 'RUN', 'dest': 'IDLE'},  # RUN에서 방향키를 떼면 IDLE
