@@ -4,6 +4,8 @@ from transitions import Machine
 
 class AutoRun:
     # 자동 무적 런 상태: 키 조작 없이 스스로 좌우로 달리기
+    SPEED = 10  # 한 프레임에 이동하는 픽셀 수 (RUN의 2배)
+    SCALE = 2  # 확대 배율
 
     def __init__(self, boy):
         self.boy = boy
@@ -17,22 +19,25 @@ class AutoRun:
     def do(self):
         boy = self.boy
         boy.frame = (boy.frame + 1) % 8
-        boy.x += boy.dir * Boy.RUN_SPEED
+        boy.x += boy.dir * AutoRun.SPEED
 
-        # 좌우 끝에 닿으면 자동으로 방향 전환
-        if boy.x > get_canvas_width() - 25:
-            boy.x = get_canvas_width() - 25
+        # 좌우 끝에 닿으면 자동으로 방향 전환 (커진 만큼 여백도 늘림)
+        margin = 25 * AutoRun.SCALE
+        if boy.x > get_canvas_width() - margin:
+            boy.x = get_canvas_width() - margin
             boy.dir = boy.face_dir = -1
-        elif boy.x < 25:
-            boy.x = 25
+        elif boy.x < margin:
+            boy.x = margin
             boy.dir = boy.face_dir = 1
 
     def draw(self):
         boy = self.boy
+        size = 100 * AutoRun.SCALE
+        y = boy.y + (AutoRun.SCALE - 1) * 50  # 커져도 발이 땅에 닿도록 위로 올림
         if boy.face_dir == 1:
-            boy.image.clip_draw(boy.frame * 100, 100, 100, 100, boy.x, boy.y)
+            boy.image.clip_draw(boy.frame * 100, 100, 100, 100, boy.x, y, size, size)
         else:
-            boy.image.clip_draw(boy.frame * 100, 0, 100, 100, boy.x, boy.y)
+            boy.image.clip_draw(boy.frame * 100, 0, 100, 100, boy.x, y, size, size)
 
 
 class Boy:
