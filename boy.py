@@ -54,7 +54,7 @@ class Boy:
         {'trigger': 'time_out', 'source': 'IDLE', 'dest': 'SLEEP'},  # IDLE로 5초가 지나면 SLEEP
         {'trigger': 'time_out', 'source': 'AUTO_RUN', 'dest': 'IDLE'},  # AUTO_RUN으로 5초가 지나면 IDLE
         {'trigger': 'space_down', 'source': 'SLEEP', 'dest': 'IDLE'},  # SLEEP에서 SPACE를 누르면 IDLE
-        {'trigger': 'arrow_down', 'source': ['IDLE', 'SLEEP'], 'dest': 'RUN'},  # IDLE 또는 SLEEP에서 방향키를 누르면 RUN
+        {'trigger': 'arrow_down', 'source': ['IDLE', 'SLEEP', 'AUTO_RUN'], 'dest': 'RUN'},  # IDLE, SLEEP, AUTO_RUN에서 방향키를 누르면 RUN
         {'trigger': 'arrow_up', 'source': 'RUN', 'dest': 'IDLE'},  # RUN에서 방향키를 떼면 IDLE
         {'trigger': 'a_down', 'source': 'IDLE', 'dest': 'AUTO_RUN'},  # IDLE에서 a를 누르면 AUTO_RUN
     ]
@@ -123,7 +123,7 @@ class Boy:
     def on_enter_AUTO_RUN(self):
         self.auto_run.enter()
 
-    def on_exit_AUTO_RUN(self):
+    def on_exit_AUTO_RUN(self, *args):  # 방향키로 나갈 때 arrow_down의 dir 인자도 전달됨
         self.auto_run.exit()
 
     def handle_event(self, event):
