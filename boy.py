@@ -1,10 +1,34 @@
-from pico2d import load_image, get_time, get_canvas_width, clamp, SDL_KEYDOWN, SDL_KEYUP, SDLK_SPACE, SDLK_LEFT, SDLK_RIGHT
+from pico2d import load_image, get_time, get_canvas_width, clamp, SDL_KEYDOWN, SDL_KEYUP, SDLK_SPACE, SDLK_LEFT, SDLK_RIGHT, SDLK_a
 from transitions import Machine
 
 
+class AutoRun:
+    # 자동 무적 런 상태: 키 조작 없이 스스로 좌우로 달리기
+
+    def __init__(self, boy):
+        self.boy = boy
+
+    def enter(self):
+        self.boy.dir = self.boy.face_dir  # 바라보던 방향으로 출발
+
+    def exit(self):
+        self.boy.dir = 0
+
+    def do(self):
+        boy = self.boy
+        boy.frame = (boy.frame + 1) % 8
+
+    def draw(self):
+        boy = self.boy
+        if boy.face_dir == 1:
+            boy.image.clip_draw(boy.frame * 100, 100, 100, 100, boy.x, boy.y)
+        else:
+            boy.image.clip_draw(boy.frame * 100, 0, 100, 100, boy.x, boy.y)
+
+
 class Boy:
-    # 상태 머신: IDLE, SLEEP, RUN 세 상태
-    states = ['IDLE', 'SLEEP', 'RUN']
+    # 상태 머신: IDLE, SLEEP, RUN, AUTO_RUN 네 상태
+    states = ['IDLE', 'SLEEP', 'RUN', 'AUTO_RUN']
 
     # 상태 전이 규칙
     transitions = [
@@ -12,6 +36,7 @@ class Boy:
         {'trigger': 'space_down', 'source': 'SLEEP', 'dest': 'IDLE'},  # SLEEP에서 SPACE를 누르면 IDLE
         {'trigger': 'arrow_down', 'source': ['IDLE', 'SLEEP'], 'dest': 'RUN'},  # IDLE 또는 SLEEP에서 방향키를 누르면 RUN
         {'trigger': 'arrow_up', 'source': 'RUN', 'dest': 'IDLE'},  # RUN에서 방향키를 떼면 IDLE
+        {'trigger': 'a_down', 'source': 'IDLE', 'dest': 'AUTO_RUN'},  # IDLE에서 a를 누르면 AUTO_RUN
     ]
 
     RUN_SPEED = 5  # 한 프레임에 이동하는 픽셀 수
@@ -22,6 +47,7 @@ class Boy:
         self.face_dir = 1  # 바라보는 방향: 1 오른쪽, -1 왼쪽
         self.dir = 0  # 이동 방향: 1 오른쪽, -1 왼쪽, 0 정지
         self.image = load_image('animation_sheet.png')
+        self.auto_run = AutoRun(self)  # AUTO_RUN 상태 처리를 맡을 상태 객체
 
         # 현재 상태에 없는 트리거(예: IDLE에서 SPACE)는 무시
         self.machine = Machine(model=self, states=Boy.states, transitions=Boy.transitions,
@@ -73,6 +99,13 @@ class Boy:
         else:
             self.image.clip_draw(self.frame * 100, 0, 100, 100, self.x, self.y)
 
+    # AUTO_RUN 상태: AutoRun 상태 클래스에 처리를 맡김
+    def on_enter_AUTO_RUN(self):
+        self.auto_run.enter()
+
+    def on_exit_AUTO_RUN(self):
+        self.auto_run.exit()
+
     def handle_event(self, event):
         if event.type == SDL_KEYDOWN:
             if event.key == SDLK_SPACE:
@@ -81,6 +114,8 @@ class Boy:
                 self.arrow_down(1)
             elif event.key == SDLK_LEFT:
                 self.arrow_down(-1)
+            elif event.key == SDLK_a:
+                self.a_down()
         elif event.type == SDL_KEYUP:
             if event.key in (SDLK_LEFT, SDLK_RIGHT):
                 self.arrow_up()
@@ -92,6 +127,8 @@ class Boy:
             self.sleep_do()
         elif self.state == 'RUN':
             self.run_do()
+        elif self.state == 'AUTO_RUN':
+            self.auto_run.do()
 
     def draw(self):
         if self.state == 'IDLE':
@@ -100,3 +137,5 @@ class Boy:
             self.sleep_draw()
         elif self.state == 'RUN':
             self.run_draw()
+        elif self.state == 'AUTO_RUN':
+            self.auto_run.draw()
