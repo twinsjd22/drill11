@@ -17,6 +17,15 @@ class AutoRun:
     def do(self):
         boy = self.boy
         boy.frame = (boy.frame + 1) % 8
+        boy.x += boy.dir * Boy.RUN_SPEED
+
+        # 좌우 끝에 닿으면 자동으로 방향 전환
+        if boy.x > get_canvas_width() - 25:
+            boy.x = get_canvas_width() - 25
+            boy.dir = boy.face_dir = -1
+        elif boy.x < 25:
+            boy.x = 25
+            boy.dir = boy.face_dir = 1
 
     def draw(self):
         boy = self.boy
